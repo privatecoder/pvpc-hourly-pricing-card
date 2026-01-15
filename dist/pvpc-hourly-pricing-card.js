@@ -348,7 +348,57 @@ class PVPCHourlyPricingCard extends LitElement {
       entities.find((eid) =>
         hass.states[eid].attributes?.attribution?.includes("REE")
       );
-    return { entity: entity };
+    const config = { entity: entity };
+    if (!entity) {
+      return config;
+    }
+
+    let period;
+    let injection;
+
+    if (entity.endsWith("current_price")) {
+      const periodCandidate = entity.replace(
+        /current_price$/,
+        "current_period"
+      );
+      if (entities.includes(periodCandidate)) {
+        period = periodCandidate;
+      }
+
+      const injectionCandidate = entity.replace(
+        /current_price$/,
+        "injection_price"
+      );
+      if (entities.includes(injectionCandidate)) {
+        injection = injectionCandidate;
+      }
+    }
+
+    if (!period) {
+      period = entities.find(
+        (eid) =>
+          eid.includes("current_period") &&
+          hass.states[eid].attributes?.attribution?.includes("REE")
+      );
+    }
+
+    if (!injection) {
+      injection = entities.find(
+        (eid) =>
+          eid.includes("injection_price") &&
+          hass.states[eid].attributes?.attribution?.includes("REE")
+      );
+    }
+
+    if (period) {
+      config.entity_period = period;
+    }
+
+    if (injection) {
+      config.entity_injection = injection;
+    }
+
+    return config;
   }
 
   getGridOptions() {
