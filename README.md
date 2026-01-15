@@ -1,21 +1,20 @@
 # PVPC Hourly Pricing Card
 
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/danimart1991/pvpc-hourly-pricing-card)
-![GitHub last commit](https://img.shields.io/github/last-commit/danimart1991/pvpc-hourly-pricing-card)
-![License](https://img.shields.io/github/license/danimart1991/pvpc-hourly-pricing-card.svg)
-[![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg)](https://github.com/custom-components/hacs)
+Home Assistant Lovelace custom card to use with the [PVPC Next integration (ESIOS API)](https://github.com/privatecoder/ha-pvpc-next).
 
-[![Tip Me via PayPal](https://img.shields.io/badge/PayPal-tip%20me-blue.svg?logo=paypal&style=flat)](https://www.paypal.me/danimart1991)
-[![Sponsor Me via GitHub](https://img.shields.io/badge/GitHub-sponsor%20me-blue.svg?logo=github&style=flat)](https://github.com/sponsors/danimart1991)
-
-Home Assistant Lovelace custom card to use with the PVPC integration (ESIOS API).
+WARNING! This is a fork/mod that is intended to work **only** with [PVPC Next](https://github.com/privatecoder/ha-pvpc-next)
 
 ![Card Example](https://raw.githubusercontent.com/danimart1991/pvpc-hourly-pricing-card/master/docs/images/card-example.png)
 
-> This card works with a previously configured PVPC integration in Home Assistant.
+> This card works with a previously configured [PVPC Next](https://github.com/privatecoder/ha-pvpc-next) integration in Home Assistant.
 > Entity IDs follow the integration name, so with the default `esios` name you will see
 > sensors like `sensor.esios_current_price`, `sensor.esios_current_period`, or
 > `sensor.esios_next_period`.
+
+## Changes in this fork/mod:
+- Prefills optional `entity_period`/`entity_injection` when the current price entity is detected.
+- Hardened entity auto-detection with REE attribution fallback.
+- Updated docs/examples for ESIOS sensor naming.
 
 ## Features
 
