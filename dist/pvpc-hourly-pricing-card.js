@@ -10,6 +10,7 @@ const locale = {
     editor_show_graph: "Mostrar gràfic",
     editor_show_only_today: "Mostra solament dia actual",
     editor_graph_baseline_zero: "Línia base zero (gràfic)",
+    editor_entity_period: "Entitat període actual (opcional)",
     editor_entity_injection: "Entitat preu injecció (opcional)",
   },
   da: {
@@ -18,6 +19,7 @@ const locale = {
     editor_show_graph: "Vis graf",
     editor_show_only_today: "Vis kun den aktuelle dag",
     editor_graph_baseline_zero: "Nul baseline (graf)",
+    editor_entity_period: "Nuværende periode enhed (valgfrit)",
     editor_entity_injection: "Injektionsprisenhed (valgfrit)",
   },
   de: {
@@ -26,6 +28,7 @@ const locale = {
     editor_show_graph: "Grafik anzeigen",
     editor_show_only_today: "Nur aktuellen tag anzeigen",
     editor_graph_baseline_zero: "Null-basislinie (grafik)",
+    editor_entity_period: "Aktuelle Periode Entitaet (optional)",
     editor_entity_injection: "Injektionspreiseinheit (optional)",
   },
   en: {
@@ -34,6 +37,7 @@ const locale = {
     editor_show_graph: "Show graph",
     editor_show_only_today: "Show only current day",
     editor_graph_baseline_zero: "Baseline zero (graph)",
+    editor_entity_period: "Current period entity (optional)",
     editor_entity_injection: "Injection price entity (optional)",
   },
   es: {
@@ -42,6 +46,7 @@ const locale = {
     editor_show_graph: "Mostrar gráfico",
     editor_show_only_today: "Mostrar solo día actual",
     editor_graph_baseline_zero: "Línea base cero (gráfico)",
+    editor_entity_period: "Entidad periodo actual (opcional)",
     editor_entity_injection: "Entidad precio inyección (opcional)",
   },
   fr: {
@@ -50,6 +55,7 @@ const locale = {
     editor_show_graph: "Afficher le graphique",
     editor_show_only_today: "Afficher uniquement le jour en cours",
     editor_graph_baseline_zero: "Référence zéro (graphique)",
+    editor_entity_period: "Entité période actuelle (facultatif)",
     editor_entity_injection: "Entité de prix d'injection (facultatif)",
   },
   nl: {
@@ -58,6 +64,7 @@ const locale = {
     editor_show_graph: "Show graph",
     editor_show_only_today: "Alleen huidige dag weergeven",
     editor_graph_baseline_zero: "Nul basislijn (graph)",
+    editor_entity_period: "Huidige periode entiteit (optioneel)",
     editor_entity_injection: "Injectieprijsentiteit (optioneel)",
   },
   pt: {
@@ -66,6 +73,7 @@ const locale = {
     editor_show_graph: "Mostrar gráfico",
     editor_show_only_today: "Mostrar apenas o dia atual",
     editor_graph_baseline_zero: "Linha de base zero (gráfico)",
+    editor_entity_period: "Entidade do periodo atual (opcional)",
     editor_entity_injection: "Entidade de preço de injeção (opcional)",
   },
   ru: {
@@ -74,6 +82,7 @@ const locale = {
     editor_show_graph: "Показать график",
     editor_show_only_today: "Показать только текущий день",
     editor_graph_baseline_zero: "Нулевая базовая линия (график)",
+    editor_entity_period: "Объект текущего периода (необязательно)",
     editor_entity_injection: "Объект цены впрыска (необязательно)",
   },
   sk: {
@@ -82,6 +91,7 @@ const locale = {
     editor_show_graph: "Zobraziť graf",
     editor_show_only_today: "Visa endast aktuell dag",
     editor_graph_baseline_zero: "Východisková nula (graf)",
+    editor_entity_period: "Entita aktualneho obdobia (volitelne)",
     editor_entity_injection: "Injektionsprisenhet (valfritt)",
   },
   sv: {
@@ -90,6 +100,7 @@ const locale = {
     editor_show_graph: "Visa graf",
     editor_show_only_today: "Zobraziť iba aktuálny deň",
     editor_graph_baseline_zero: "Noll baslinje (graf)",
+    editor_entity_period: "Enhet foer aktuell period (valfritt)",
     editor_entity_injection: "Subjekt ceny vstrekovania (voliteľné)",
   },
 };
@@ -324,9 +335,19 @@ class PVPCHourlyPricingCard extends LitElement {
   }
 
   static getStubConfig(hass) {
-    const entity = Object.keys(hass.states).find((eid) =>
-      hass.states[eid].attributes?.attribution?.includes("REE")
-    );
+    const entities = Object.keys(hass.states);
+    const entity =
+      entities.find(
+        (eid) => eid.includes("esios") && eid.includes("current_price")
+      ) ||
+      entities.find(
+        (eid) =>
+          eid.includes("current_price") &&
+          hass.states[eid].attributes?.attribution?.includes("REE")
+      ) ||
+      entities.find((eid) =>
+        hass.states[eid].attributes?.attribution?.includes("REE")
+      );
     return { entity: entity };
   }
 
@@ -344,7 +365,7 @@ class PVPCHourlyPricingCard extends LitElement {
   setConfig(config) {
     if (!config.entity) {
       throw new Error(
-        'Please define a "Spain electricity hourly pricing (PVPC)" entity.'
+        'Please define an "ESIOS Current Price" entity.'
       );
     }
 
@@ -378,6 +399,10 @@ class PVPCHourlyPricingCard extends LitElement {
       this._config.entity in this.hass.states
         ? this.hass.states[this._config.entity]
         : null;
+    this._entity_period =
+      this._config.entity_period in this.hass.states
+        ? this.hass.states[this._config.entity_period]
+        : null;
     this._entity_injection =
       this._config.entity_injection in this.hass.states
         ? this.hass.states[this._config.entity_injection]
@@ -400,9 +425,13 @@ class PVPCHourlyPricingCard extends LitElement {
 
     return html`
       <ha-card tabindex="0">
-        <h1 class="card-header custom-card-header">
-          <div class="name">${this._config.title}</div>
-        </h1>
+        ${this._config.title
+          ? html`
+              <h1 class="card-header custom-card-header">
+                <div class="name">${this._config.title}</div>
+              </h1>
+            `
+          : ""}
         ${this._config.show_current !== false ? this._renderCurrent() : ""}
         ${this._config.show_details !== false ? this._renderDetails() : ""}
         ${this._config.show_graph !== false ? this._renderGraph() : ""}
@@ -415,7 +444,8 @@ class PVPCHourlyPricingCard extends LitElement {
 
     this._number_elements++;
 
-    const period = this._entity.attributes?.period || "Error";
+    const period =
+      this._entity_period?.state || this._entity.attributes?.period || "Error";
     const style = getComputedStyle(document.body);
     const icon_color = style.getPropertyValue(
       PVPCHourlyPricingCard._period_icons_colors[period]
@@ -460,60 +490,77 @@ class PVPCHourlyPricingCard extends LitElement {
 
     this._number_elements++;
 
+    const today_stats = this._getPriceStats(this._entity.attributes, "price_");
+    const tomorrow_stats = this._getPriceStats(
+      this._entity.attributes,
+      "price_next_day_"
+    );
+    const injection_attributes = this._entity_injection
+      ? this._entity_injection.attributes
+      : {};
+    const today_stats_injection = this._getPriceStats(
+      injection_attributes,
+      "price_"
+    );
+    const tomorrow_stats_injection = this._getPriceStats(
+      injection_attributes,
+      "price_next_day_"
+    );
+
     const today_min = this._renderDetail(
       PVPCHourlyPricingCard._colors[0],
       "mdi:triangle-down",
-      this._entity.attributes.min_price,
-      this._entity.attributes.min_price_at
+      today_stats.min_price,
+      today_stats.min_hour
     );
 
     const today_max = this._renderDetail(
       PVPCHourlyPricingCard._colors[0],
       "mdi:triangle",
-      this._entity.attributes.max_price,
-      this._entity.attributes.max_price_at
+      today_stats.max_price,
+      today_stats.max_hour
     );
 
     const tomorrow_min = this._renderDetail(
       PVPCHourlyPricingCard._colors[1],
       "mdi:triangle-down",
-      this._entity.attributes["min_price (next day)"],
-      this._entity.attributes["min_price_at (next day)"]
+      tomorrow_stats.min_price,
+      tomorrow_stats.min_hour
     );
 
     const tomorrow_max = this._renderDetail(
       PVPCHourlyPricingCard._colors[1],
       "mdi:triangle",
-      this._entity.attributes["max_price (next day)"],
-      this._entity.attributes["max_price_at (next day)"]
+      tomorrow_stats.max_price,
+      tomorrow_stats.max_hour
     );
 
     const today_min_injection = this._renderDetail(
       PVPCHourlyPricingCard._colors[0],
       "mdi:triangle-down-outline",
-      this._entity_injection?.attributes.min_price,
-      this._entity_injection?.attributes.min_price_at
+      today_stats_injection.min_price,
+      today_stats_injection.min_hour
     );
 
     const today_max_injection = this._renderDetail(
       PVPCHourlyPricingCard._colors[0],
       "mdi:triangle-outline",
-      this._entity_injection?.attributes.max_price,
-      this._entity_injection?.attributes.max_price_at
+      today_stats_injection.max_price,
+      today_stats_injection.max_hour
     );
 
     const tomorrow_min_injection = this._renderDetail(
       PVPCHourlyPricingCard._colors[1],
       "mdi:triangle-down-outline",
-      this._entity_injection?.attributes["min_price (next day)"],
-      this._entity_injection?.attributes["min_price_at (next day)"]
+      tomorrow_stats_injection.min_price,
+      tomorrow_stats_injection.min_hour
     );
 
     const tomorrow_max_injection = this._renderDetail(
       PVPCHourlyPricingCard._colors[1],
       "mdi:triangle-outline",
-      this._entity_injection?.attributes["max_price (next day)"],
-      this._entity_injection?.attributes["max_price_at (next day)"]
+      tomorrow_stats_injection.max_price,
+      tomorrow_stats_injection.max_hour
     );
 
     return html`
@@ -555,10 +602,12 @@ class PVPCHourlyPricingCard extends LitElement {
   }
 
   _renderDetail(color, icon, price, hour) {
-    const primary_text = price
+    const has_price = price !== null && price !== undefined;
+    const primary_text = has_price
       ? `${this._formatNumber(price)} ${this._unit_of_measurement}`
       : this.hass.localize("state.default.unavailable");
-    const secondary_text = hour
+    const has_hour = hour !== null && hour !== undefined;
+    const secondary_text = has_hour
       ? `${this._formatHour(hour)} - ${this._formatHour(hour + 1)}`
       : null;
     return html`
@@ -714,7 +763,9 @@ class PVPCHourlyPricingCard extends LitElement {
 
     if (
       !this._config.show_only_today &&
-      data.prices_tomorrow.some((value) => value)
+      data.prices_tomorrow.some(
+        (value) => value !== null && value !== undefined
+      )
     ) {
       options.series.push(
         Object.assign({}, base_series, {
@@ -724,7 +775,9 @@ class PVPCHourlyPricingCard extends LitElement {
       );
     }
 
-    if (data.injection_prices.some((value) => value)) {
+    if (
+      data.injection_prices.some((value) => value !== null && value !== undefined)
+    ) {
       options.series.push(
         Object.assign({}, base_series, {
           name: this._formatDate(today),
@@ -736,7 +789,9 @@ class PVPCHourlyPricingCard extends LitElement {
 
     if (
       !this._config.show_only_today &&
-      data.injection_prices_tomorrow.some((value) => value)
+      data.injection_prices_tomorrow.some(
+        (value) => value !== null && value !== undefined
+      )
     ) {
       options.series.push(
         Object.assign({}, base_series, {
@@ -767,11 +822,18 @@ class PVPCHourlyPricingCard extends LitElement {
     for (let i = 0; i < 24; i++) {
       categories.push(this._formatHour(i));
       const hour = this._getPadStartNumber(i);
-      prices.push(attributes[`price_${hour}h`] || null);
-      prices_tomorrow.push(attributes[`price_next_day_${hour}h`] || null);
-      injection_prices.push(injection_attributes[`price_${hour}h`] || null);
+      prices.push(this._getAttributeValue(attributes, `price_${hour}h`));
+      prices_tomorrow.push(
+        this._getAttributeValue(attributes, `price_next_day_${hour}h`)
+      );
+      injection_prices.push(
+        this._getAttributeValue(injection_attributes, `price_${hour}h`)
+      );
       injection_prices_tomorrow.push(
-        injection_attributes[`price_next_day_${hour}h`] || null
+        this._getAttributeValue(
+          injection_attributes,
+          `price_next_day_${hour}h`
+        )
       );
     }
 
@@ -788,6 +850,46 @@ class PVPCHourlyPricingCard extends LitElement {
       injection_prices: injection_prices,
       injection_prices_tomorrow: injection_prices_tomorrow,
     };
+  }
+
+  _getAttributeValue(attributes, key) {
+    const value = attributes?.[key];
+    return value !== null && value !== undefined ? value : null;
+  }
+
+  _getPriceStats(attributes, prefix) {
+    const prices = [];
+    for (let i = 0; i < 24; i++) {
+      const hour = this._getPadStartNumber(i);
+      const key = `${prefix}${hour}h`;
+      const value = attributes?.[key];
+      if (value !== null && value !== undefined) {
+        prices.push({ hour: i, price: Number(value) });
+      }
+      const dup_key = `${key}_d`;
+      const dup_value = attributes?.[dup_key];
+      if (dup_value !== null && dup_value !== undefined) {
+        prices.push({ hour: i, price: Number(dup_value) });
+      }
+    }
+    if (!prices.length) {
+      return { min_price: null, min_hour: null, max_price: null, max_hour: null };
+    }
+    let min_price = prices[0].price;
+    let max_price = prices[0].price;
+    let min_hour = prices[0].hour;
+    let max_hour = prices[0].hour;
+    prices.forEach(({ hour, price }) => {
+      if (price < min_price) {
+        min_price = price;
+        min_hour = hour;
+      }
+      if (price > max_price) {
+        max_price = price;
+        max_hour = hour;
+      }
+    });
+    return { min_price, min_hour, max_price, max_hour };
   }
 
   _formatDate(value, language) {
@@ -864,6 +966,11 @@ export class PVPCHourlyPricingCardEditor extends LitElement {
       {
         name: "entity",
         required: true,
+        selector: { entity: { domain: "sensor" } },
+      },
+      {
+        name: "entity_period",
+        required: false,
         selector: { entity: { domain: "sensor" } },
       },
       {
@@ -954,6 +1061,6 @@ window.customCards.push({
   name: "PVPC Hourly Pricing",
   preview: true,
   description:
-    "The PVPC Hourly Pricing card allows you to display propertly the PVPC Hourly Pricing entity.",
-  documentationURL: "https://github.com/danimart1991/pvpc-hourly-pricing-card",
+    "The PVPC Hourly Pricing card allows you to display ESIOS PVPC prices.",
+  documentationURL: "https://github.com/privatecoder/ha-pvpc-next",
 });
