@@ -21,7 +21,7 @@ WARNING! This is a fork/mod that is intended to work **only** with [PVPC Next](h
 - Compatible with all rates.
 - Actual price close-up.
 - Graph with the prices of the current day.
-- Graph with the prices of the next day when you are available.
+- Graph with the prices of the next day when they are available.
 - Graph with the injection prices.
 - Lowest and Highest of the current and next day.
 - Icon indicating the current pricing period (uses the optional period entity if provided).
